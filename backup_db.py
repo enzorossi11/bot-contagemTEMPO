@@ -1,24 +1,33 @@
 import subprocess
-import datetime
+from datetime import datetime
+import os
+import shutil
 
-def executar_backup():
-    try:
-        # Nome do arquivo a fazer backup
-        db_file = "tempo_online.db"
+# Caminho do banco original e nome do arquivo de backup
+db_path = "tempo_online.db"
+backup_path = "tempo_online.db"  # Mantém o mesmo nome para sobrescrever
 
-        # Nome do commit com data
-        commit_message = f"Backup automático database pontos {datetime.datetime.now().isoformat(timespec='seconds')}"
+# Garante que estamos no diretório do projeto
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-        # Comandos Git
-        subprocess.run(["git", "config", "--global", "user.name", "BackupBot"], check=True)
-        subprocess.run(["git", "config", "--global", "user.email", "backup@bot.com"], check=True)
-        subprocess.run(["git", "add", db_file], check=True)
-        subprocess.run(["git", "commit", "-m", commit_message], check=True)
-        subprocess.run(["git", "push", "origin", "main"], check=True)
+# Atualiza o arquivo de backup
+shutil.copyfile(db_path, backup_path)
 
-        print("Backup enviado com sucesso.")
-    except subprocess.CalledProcessError as e:
-        print("Erro ao fazer backup:", e)
+# Define as variáveis necessárias
+repo_url = "https://oauth2:os.getenv("GITHUB_TOKEN")@github.com/enzorossi11/bot-contagemTEMPO.git"
+branch = "main"
 
-if __name__ == "__main__":
-    executar_backup()
+# Configurações iniciais de git
+subprocess.run(["git", "config", "--global", "user.email", "backup@bot.com"])
+subprocess.run(["git", "config", "--global", "user.name", "Bot Backup"])
+
+# Adiciona o arquivo de banco de dados
+subprocess.run(["git", "add", "tempo_online.db"])
+
+# Faz commit com horário UTC
+timestamp = datetime.utcnow().isoformat()
+commit_message = f"Backup automático database pontos {timestamp}"
+subprocess.run(["git", "commit", "-m", commit_message])
+
+# Faz push para o repositório remoto (com token)
+subprocess.run(["git", "push", repo_url, branch])
