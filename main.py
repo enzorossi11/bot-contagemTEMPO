@@ -1,6 +1,4 @@
 # tempo_bot.py final com ranking diario, semanal e all time + frases + formatação de tempo
-from keep_alive import keep_alive
-keep_alive()
 import discord
 import asyncio
 from discord.ext import commands, tasks
