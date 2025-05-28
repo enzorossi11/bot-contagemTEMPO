@@ -1,33 +1,34 @@
 import os
-import shutil
 import datetime
-from git import Repo
+import subprocess
 
-# Caminhos
-REPO_DIR = os.getcwd()
-DB_NAME = "tempo_online.db"
-BACKUP_NAME = "tempo_online.db"
-GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
-REPO_URL = f"https://{GITHUB_TOKEN}@github.com/enzorossi11/bot-contagemTEMPO.git"
+# Dados do repositório
+GITHUB_USERNAME = "enzorossi11"
+REPO_NAME = "bot-contagemTEMPO"
+BRANCH = "main"
 
-# Inicializa ou abre repositório Git
-if not os.path.exists(os.path.join(REPO_DIR, ".git")):
-    repo = Repo.clone_from(REPO_URL, REPO_DIR)
-else:
-    repo = Repo(REPO_DIR)
+# Caminho do banco
+DB_FILE = "tempo_online.db"
 
-# Puxa alterações mais recentes
-origin = repo.remotes.origin
-origin.pull()
-
-# Garante que o banco está salvo com o nome correto
-shutil.copyfile(DB_NAME, os.path.join(REPO_DIR, BACKUP_NAME))
-
-# Adiciona e commita
-repo.git.add(BACKUP_NAME)
+# Nome do commit
 now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
-repo.index.commit(f"Backup automático database pontos {now}")
+commit_message = f"Backup automático database pontos {now}"
 
-# Faz push
-origin.push()
-print("Backup realizado com sucesso.")
+# Configuração global (opcional, mas ajuda o git a não travar)
+subprocess.run(["git", "config", "--global", "user.email", "backup@render.com"])
+subprocess.run(["git", "config", "--global", "user.name", "Render Backup Bot"])
+
+# Adiciona o arquivo do banco ao stage
+subprocess.run(["git", "add", DB_FILE])
+
+# Faz o commit
+subprocess.run(["git", "commit", "-m", commit_message])
+
+# Pega o token do ambiente seguro
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+
+# Monta o link com autenticação
+repo_url = f"https://{GITHUB_USERNAME}:{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{REPO_NAME}.git"
+
+# Faz o push
+subprocess.run(["git", "push", repo_url, BRANCH])
