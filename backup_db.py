@@ -1,33 +1,33 @@
-import subprocess
-from datetime import datetime
 import os
 import shutil
+import datetime
+from git import Repo
 
-# Caminho do banco original e nome do arquivo de backup
-db_path = "tempo_online.db"
-backup_path = "tempo_online.db"  # Mantém o mesmo nome para sobrescrever
+# Caminhos
+REPO_DIR = os.getcwd()
+DB_NAME = "tempo_online.db"
+BACKUP_NAME = "tempo_online.db"
+GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
+REPO_URL = f"https://{GITHUB_TOKEN}@github.com/enzorossi11/bot-contagemTEMPO.git"
 
-# Garante que estamos no diretório do projeto
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+# Inicializa ou abre repositório Git
+if not os.path.exists(os.path.join(REPO_DIR, ".git")):
+    repo = Repo.clone_from(REPO_URL, REPO_DIR)
+else:
+    repo = Repo(REPO_DIR)
 
-# Atualiza o arquivo de backup
-shutil.copyfile(db_path, backup_path)
+# Puxa alterações mais recentes
+origin = repo.remotes.origin
+origin.pull()
 
-# Define as variáveis necessárias
-repo_url = "https://oauth2:os.getenv("GITHUB_TOKEN")@github.com/enzorossi11/bot-contagemTEMPO.git"
-branch = "main"
+# Garante que o banco está salvo com o nome correto
+shutil.copyfile(DB_NAME, os.path.join(REPO_DIR, BACKUP_NAME))
 
-# Configurações iniciais de git
-subprocess.run(["git", "config", "--global", "user.email", "backup@bot.com"])
-subprocess.run(["git", "config", "--global", "user.name", "Bot Backup"])
+# Adiciona e commita
+repo.git.add(BACKUP_NAME)
+now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+repo.index.commit(f"Backup automático database pontos {now}")
 
-# Adiciona o arquivo de banco de dados
-subprocess.run(["git", "add", "tempo_online.db"])
-
-# Faz commit com horário UTC
-timestamp = datetime.utcnow().isoformat()
-commit_message = f"Backup automático database pontos {timestamp}"
-subprocess.run(["git", "commit", "-m", commit_message])
-
-# Faz push para o repositório remoto (com token)
-subprocess.run(["git", "push", repo_url, branch])
+# Faz push
+origin.push()
+print("Backup realizado com sucesso.")
