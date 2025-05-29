@@ -17,7 +17,7 @@ subprocess.run(["git", "config", "--global", "user.email", "backup@render.com"])
 subprocess.run(["git", "config", "--global", "user.name", "Render Backup Bot"])
 
 # Puxa alterações remotas antes de commitar
-subprocess.run(["git", "pull", "--rebase"])
+subprocess.run(["git", "pull", "origin", BRANCH])
 
 # Marca o arquivo como modificado
 subprocess.run(["git", "add", DB_FILE])
