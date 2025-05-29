@@ -2,13 +2,11 @@ import os
 import datetime
 import subprocess
 
-# Dados do repositório
 GITHUB_USERNAME = "enzorossi11"
 REPO_NAME = "bot-contagemTEMPO"
 BRANCH = "main"
 DB_FILE = "tempo_online.db"
 
-# Mensagem de commit
 now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
 commit_message = f"Backup automático database pontos {now}"
 
@@ -16,18 +14,19 @@ commit_message = f"Backup automático database pontos {now}"
 subprocess.run(["git", "config", "--global", "user.email", "backup@render.com"])
 subprocess.run(["git", "config", "--global", "user.name", "Render Backup Bot"])
 
-# Clona o repositório novamente para garantir HEAD
-subprocess.run(["git", "pull", f"https://{GITHUB_USERNAME}:{os.environ.get('GITHUB_TOKEN')}@github.com/{GITHUB_USERNAME}/{REPO_NAME}.git", BRANCH])
+# Atualiza antes de commitar
+subprocess.run(["git", "pull", "--rebase", "origin", BRANCH])
 
-# Adiciona e faz commit
+# Adiciona e comita
 subprocess.run(["git", "add", DB_FILE])
 commit_result = subprocess.run(["git", "commit", "-m", commit_message], capture_output=True, text=True)
 
-# Pula se não houver mudanças
+# Se não tiver nada pra commitar, encerra
 if "nothing to commit" in commit_result.stdout + commit_result.stderr:
     print("Nenhuma mudança para commitar.")
     exit(0)
 
-# Faz push
-repo_url = f"https://{GITHUB_USERNAME}:{os.environ.get('GITHUB_TOKEN')}@github.com/{GITHUB_USERNAME}/{REPO_NAME}.git"
+# Push com token
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+repo_url = f"https://{GITHUB_USERNAME}:{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{REPO_NAME}.git"
 subprocess.run(["git", "push", repo_url, BRANCH])
