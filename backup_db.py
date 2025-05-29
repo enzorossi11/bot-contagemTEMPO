@@ -16,6 +16,11 @@ commit_message = f"Backup automático database pontos {now}"
 subprocess.run(["git", "config", "--global", "user.email", "backup@render.com"])
 subprocess.run(["git", "config", "--global", "user.name", "Render Backup Bot"])
 
+# Atualiza o repositório local com os dados remotos para evitar conflitos
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+repo_url = f"https://{GITHUB_USERNAME}:{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{REPO_NAME}.git"
+subprocess.run(["git", "pull", "--rebase", repo_url, BRANCH])
+
 # Adiciona e faz commit
 subprocess.run(["git", "add", DB_FILE])
 commit_result = subprocess.run(["git", "commit", "-m", commit_message], capture_output=True, text=True)
@@ -25,7 +30,5 @@ if "nothing to commit" in commit_result.stdout + commit_result.stderr:
     print("Nenhuma mudança para commitar.")
     exit(0)
 
-# Push com token
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-repo_url = f"https://{GITHUB_USERNAME}:{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{REPO_NAME}.git"
+# Faz push com autenticação
 subprocess.run(["git", "push", repo_url, BRANCH])
