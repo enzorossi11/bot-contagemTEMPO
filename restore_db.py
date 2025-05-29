@@ -1,28 +1,21 @@
 import os
-import shutil
-import requests
+import subprocess
 
-# Configurações
+# Dados do repositório
 GITHUB_USERNAME = "enzorossi11"
 REPO_NAME = "bot-contagemTEMPO"
 BRANCH = "main"
 DB_FILE = "tempo_online.db"
-TOKEN = os.environ.get("GITHUB_TOKEN")
 
-# URL do arquivo bruto no GitHub
-url = f"https://raw.githubusercontent.com/{GITHUB_USERNAME}/{REPO_NAME}/{BRANCH}/{DB_FILE}"
+# Configura o Git (evita erros no Render)
+subprocess.run(["git", "config", "--global", "user.email", "restore@render.com"])
+subprocess.run(["git", "config", "--global", "user.name", "Render Restore Bot"])
 
-# Caminho local onde o arquivo deve ser salvo
-destino = os.path.join(os.getcwd(), DB_FILE)
+# Recupera o token
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+repo_url = f"https://{GITHUB_USERNAME}:{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{REPO_NAME}.git"
 
-# Baixa o arquivo
-print(f"Baixando {url}...")
-headers = {"Authorization": f"token {TOKEN}"}
-r = requests.get(url, headers=headers)
+# Garante que está atualizado com o último commit
+subprocess.run(["git", "pull", repo_url, BRANCH])
 
-if r.status_code == 200:
-    with open(destino, "wb") as f:
-        f.write(r.content)
-    print(f"{DB_FILE} restaurado com sucesso.")
-else:
-    print(f"Erro ao baixar o banco de dados: {r.status_code} - {r.text}")
+print(f"{DB_FILE} restaurado com sucesso do GitHub.")
