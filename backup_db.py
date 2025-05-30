@@ -1,42 +1,42 @@
-import os
+import requests
+import base64
 import datetime
-import subprocess
-import sys
+import os
 
-# Dados do repositório
 GITHUB_USERNAME = "enzorossi11"
 REPO_NAME = "bot-contagemTEMPO"
 BRANCH = "main"
 DB_FILE = "tempo_online.db"
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 
-# Mensagem de commit
+# Nome do commit
 now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
 commit_message = f"Backup automático database pontos {now}"
 
-# Token e URL do repositório
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-REPO_URL = f"https://{GITHUB_USERNAME}:{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{REPO_NAME}.git"
+# Lê o conteúdo do arquivo
+with open(DB_FILE, "rb") as f:
+    content = base64.b64encode(f.read()).decode("utf-8")
 
-# Configura o Git
-subprocess.run(["git", "config", "--global", "user.email", "backup@render.com"])
-subprocess.run(["git", "config", "--global", "user.name", "Render Backup Bot"])
+# Verifica se o arquivo já existe para pegar o SHA
+url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents/{DB_FILE}"
+headers = {"Authorization": f"Bearer {GITHUB_TOKEN}"}
 
-# Garante que estamos rastreando a branch correta da origem
-subprocess.run(["git", "remote", "remove", "origin"], stderr=subprocess.DEVNULL)
-subprocess.run(["git", "remote", "add", "origin", REPO_URL])
-subprocess.run(["git", "fetch", "origin"])
-subprocess.run(["git", "checkout", "-B", BRANCH, "--track", f"origin/{BRANCH}"])
+response = requests.get(url, headers=headers)
+sha = response.json().get("sha") if response.status_code == 200 else None
 
-# Adiciona e comita o arquivo
-subprocess.run(["git", "add", DB_FILE])
-commit_result = subprocess.run(["git", "commit", "-m", commit_message], capture_output=True, text=True)
+# Faz upload do arquivo
+data = {
+    "message": commit_message,
+    "content": content,
+    "branch": BRANCH
+}
+if sha:
+    data["sha"] = sha
 
-# Pula se não houver mudanças
-if "nothing to commit" in (commit_result.stdout + commit_result.stderr).lower():
-    print("Nenhuma mudança para commitar.")
-    sys.exit(0)
+put_response = requests.put(url, headers=headers, json=data)
 
-# Tenta push forçado para resolver conflitos
-push_result = subprocess.run(["git", "push", "--force", "origin", BRANCH], capture_output=True, text=True)
-print(push_result.stdout)
-print(push_result.stderr)
+if put_response.status_code in [200, 201]:
+    print("✔ Backup enviado com sucesso!")
+else:
+    print("❌ Falha ao enviar backup:")
+    print(put_response.json())
