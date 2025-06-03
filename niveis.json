@@ -1,1 +1,146 @@
-# niveis.json - 24 níveis com nome, emoji e tempo necessário
+[
+  {
+    "nivel": 1,
+    "nome": "Recém-chegado",
+    "emoji": "🐣",
+    "tempo_segundos": 7200
+  },
+  {
+    "nivel": 2,
+    "nome": "Filhote de degenerado",
+    "emoji": "🧃",
+    "tempo_segundos": 18000
+  },
+  {
+    "nivel": 3,
+    "nome": "Cuzão itinerante",
+    "emoji": "🚪",
+    "tempo_segundos": 36000
+  },
+  {
+    "nivel": 4,
+    "nome": "Gado da call",
+    "emoji": "🐄",
+    "tempo_segundos": 64800
+  },
+  {
+    "nivel": 5,
+    "nome": "Imbrochável",
+    "emoji": "🍆",
+    "tempo_segundos": 108000
+  },
+  {
+    "nivel": 6,
+    "nome": "Fumante de call",
+    "emoji": "🚬",
+    "tempo_segundos": 172800
+  },
+  {
+    "nivel": 7,
+    "nome": "Cadeira cativa",
+    "emoji": "📍",
+    "tempo_segundos": 237600
+  },
+  {
+    "nivel": 8,
+    "nome": "Figurante fixo",
+    "emoji": "👤",
+    "tempo_segundos": 302400
+  },
+  {
+    "nivel": 9,
+    "nome": "Estátua do servidor",
+    "emoji": "🗿",
+    "tempo_segundos": 345600
+  },
+  {
+    "nivel": 10,
+    "nome": "Viciado",
+    "emoji": "😵‍💫",
+    "tempo_segundos": 432000
+  },
+  {
+    "nivel": 11,
+    "nome": "Eco ambulante",
+    "emoji": "🌪️",
+    "tempo_segundos": 518400
+  },
+  {
+    "nivel": 12,
+    "nome": "NPC falante",
+    "emoji": "🤖",
+    "tempo_segundos": 604800
+  },
+  {
+    "nivel": 13,
+    "nome": "Penetra vitalício",
+    "emoji": "🎭",
+    "tempo_segundos": 734400
+  },
+  {
+    "nivel": 14,
+    "nome": "Engrenagem da desgraça",
+    "emoji": "🧩",
+    "tempo_segundos": 864000
+  },
+  {
+    "nivel": 15,
+    "nome": "Staff moral",
+    "emoji": "🛠️",
+    "tempo_segundos": 1036800
+  },
+  {
+    "nivel": 16,
+    "nome": "Zelador moral",
+    "emoji": "🧹",
+    "tempo_segundos": 1209600
+  },
+  {
+    "nivel": 17,
+    "nome": "Inoxidável",
+    "emoji": "🧱",
+    "tempo_segundos": 1468800
+  },
+  {
+    "nivel": 18,
+    "nome": "Imorrível",
+    "emoji": "💀",
+    "tempo_segundos": 1814400
+  },
+  {
+    "nivel": 19,
+    "nome": "Irrelevante premium",
+    "emoji": "📦",
+    "tempo_segundos": 2246400
+  },
+  {
+    "nivel": 20,
+    "nome": "Presença opressora",
+    "emoji": "🌑",
+    "tempo_segundos": 2764800
+  },
+  {
+    "nivel": 21,
+    "nome": "Apocalíptico",
+    "emoji": "🔱",
+    "tempo_segundos": 3456000
+  },
+  {
+    "nivel": 22,
+    "nome": "Deus do microfone",
+    "emoji": "🕊️",
+    "tempo_segundos": 4320000
+  },
+  {
+    "nivel": 23,
+    "nome": "Voz do além",
+    "emoji": "🔮",
+    "tempo_segundos": 5184000
+  },
+  {
+    "nivel": 24,
+    "nome": "Dono moral",
+    "emoji": "👑",
+    "tempo_segundos": 6480000
+  }
+]

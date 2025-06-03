@@ -1,1 +1,16 @@
-# recordes.json - estrutura dos recordes históricos
+{
+  "maior_tempo_dia": {
+    "usuario": "N/A",
+    "tempo": 0,
+    "data": "N/A"
+  },
+  "maior_tempo_semana": {
+    "usuario": "N/A",
+    "tempo": 0,
+    "semana": "N/A"
+  },
+  "maior_qtd_membros_call": {
+    "quantidade": 0,
+    "data": "N/A"
+  }
+}
