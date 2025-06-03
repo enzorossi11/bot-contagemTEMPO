@@ -4,7 +4,8 @@ from datetime import datetime, timedelta, time
 import sqlite3
 import os
 import json
-from comandos import setup_comandos  # importa os comandos do arquivo separado
+import random
+from comandos import setup_comandos
 
 TOKEN = os.environ["DISCORD_TOKEN"]
 AFK_CHANNEL_ID = 978353439669125151
@@ -97,13 +98,16 @@ async def on_voice_state_update(member, before, after):
             if nivel_novo > nivel_antigo and nivel_novo >= 5:
                 canal = bot.get_channel(CANAL_UP_ID)
                 try:
+                    nome = dados_novo["nome"]
+                    emoji = dados_novo["emoji"]
+                    description = f"{member.mention} agora é **{nome}** {emoji}\n🕒 Tempo total: {formatar_tempo(tempo_atual)}"
+
                     embed = discord.Embed(
                         title=random.choice(["📈 Subiu de Nível!", "📢 Novo Nível Desbloqueado!"]),
-                        description=f"{member.mention} agora é **{dados_novo['nome']}** {dados_novo['emoji']}
-"
-                                    f"🕒 Tempo total: {formatar_tempo(tempo_atual)}",
+                        description=description,
                         color=0x00ffcc
                     )
+
                     faixa = ""
                     if 5 <= nivel_novo <= 9: faixa = "5-9"
                     elif 10 <= nivel_novo <= 14: faixa = "10-14"
@@ -113,7 +117,6 @@ async def on_voice_state_update(member, before, after):
                     with open("frases_niveis.json", encoding="utf-8") as f:
                         frases = json.load(f)
                         if faixa in frases:
-                            import random
                             embed.add_field(name="🗣️", value=random.choice(frases[faixa]), inline=False)
 
                     await canal.send(embed=embed)
@@ -133,7 +136,5 @@ async def verificar_tempos():
                 cursor.execute("INSERT INTO historico (user_id, timestamp, segundos) VALUES (?, ?, ?)" , (member.id, agora(), 60))
     conn.commit()
 
-# Ativar os comandos
 setup_comandos(bot, conn, cursor, NIVEIS)
-
 bot.run(TOKEN)
