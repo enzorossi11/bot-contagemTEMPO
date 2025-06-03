@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import datetime
+import json
 
 def formatar_tempo(segundos_total):
     minutos = segundos_total // 60
@@ -22,7 +23,6 @@ def setup_comandos(bot, conn, cursor, niveis):
         row = cursor.fetchone()
         tempo_total = int(row[0]) if row else 0
 
-        # calcular nível
         nivel, dados = 1, niveis[0]
         for i in reversed(range(len(niveis))):
             if tempo_total >= niveis[i]["tempo_segundos"]:
@@ -30,14 +30,18 @@ def setup_comandos(bot, conn, cursor, niveis):
                 dados = niveis[i]
                 break
 
-        # tempo para o próximo nível
-        tempo_prox = None
         if nivel < len(niveis):
             tempo_prox = niveis[nivel]["tempo_segundos"] - tempo_total
         else:
             tempo_prox = 0
 
-        progresso_pct = 100 if tempo_prox == 0 else int((tempo_total - dados["tempo_segundos"]) / (niveis[nivel]["tempo_segundos"] - dados["tempo_segundos"]) * 100)
+        if nivel >= len(niveis):
+            progresso_pct = 100
+        elif tempo_total < dados["tempo_segundos"]:
+            progresso_pct = 0
+        else:
+            proximo = niveis[nivel]["tempo_segundos"]
+            progresso_pct = int((tempo_total - dados["tempo_segundos"]) / (proximo - dados["tempo_segundos"]) * 100)
 
         embed = discord.Embed(
             title=f"📈 Estatísticas de {ctx.author.display_name}",
@@ -63,11 +67,36 @@ def setup_comandos(bot, conn, cursor, niveis):
         except Exception as e:
             await ctx.send(f"Erro ao carregar recordes: {e}")
 
+    @bot.command(name="niveis")
+    async def niveis_cmd(ctx):
+        user_id = ctx.author.id
+        cursor.execute("SELECT tempo_total FROM usuarios WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        tempo_total = int(row[0]) if row else 0
+
+        nivel_atual = 1
+        for i in reversed(range(len(niveis))):
+            if tempo_total >= niveis[i]["tempo_segundos"]:
+                nivel_atual = i + 1
+                break
+
+        desc = ""
+        for n in niveis:
+            tempo_str = "Secreto" if n["nivel"] >= 19 else formatar_tempo(n["tempo_segundos"])
+            linha = f"{n['emoji']} Lv.{n['nivel']} — {n['nome']} ({tempo_str})"
+            if n["nivel"] == nivel_atual:
+                linha = f"**{linha} ← você**"
+            desc += linha + "\n"
+
+        embed = discord.Embed(title="📊 Lista de Níveis", description=desc, color=discord.Color.teal())
+        await ctx.send(embed=embed)
+
     @bot.command(name="comandos")
     async def comandos(ctx):
         embed = discord.Embed(title="📜 Comandos disponíveis", color=discord.Color.green())
         embed.add_field(name="!pontos ou !perfil", value="Mostra seu tempo total, semanal, hoje, nível atual, progresso e ranking.", inline=False)
         embed.add_field(name="!toptempo", value="Exibe os recordes históricos do servidor.", inline=False)
+        embed.add_field(name="!niveis", value="Mostra a lista completa de níveis do servidor.", inline=False)
         if ctx.author.id == 343856610235383809:
             embed.add_field(name="!ranking now", value="Força geração dos rankings mesmo fora do horário.", inline=False)
             embed.add_field(name="!backup now", value="Gera backup manual do banco e envia pro GitHub.", inline=False)
