@@ -224,7 +224,7 @@ async def backup_database(ctx):
 async def restore(ctx):
     if ctx.author.id != OWNER_ID:
         return
-    await ctx.send("⚠️ Isso vai restaurar o banco do GitHub e apagar o atual.
+    await ctx.send("⚠️ Isso vai restaurar o banco do GitHub e apagar o atual.\nDigite `!confirmar_restore` pra continuar.")
 Digite `!confirmar_restore` pra continuar.")
 
 @bot.command()
