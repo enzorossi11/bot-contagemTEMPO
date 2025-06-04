@@ -59,6 +59,7 @@ def calcular_nivel(tempo_total):
 
 @bot.event
 async def on_ready():
+    await restore_db_from_github()
     print(f"✅ Bot conectado como {bot.user}")
     verificar_tempos.start()
 
@@ -138,3 +139,100 @@ async def verificar_tempos():
 
 setup_comandos(bot, conn, cursor, NIVEIS)
 bot.run(TOKEN)
+
+
+# === INÍCIO BLOCO BACKUP / RESTORE ===
+import base64
+import requests
+import aiocron
+
+GITHUB_REPO = 'enzorossi11/bot-contagemTEMPO'
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+OWNER_ID = 343856610235383809
+DB_FILE = 'tempo_online.db'
+GITHUB_API_URL = f'https://api.github.com/repos/{GITHUB_REPO}/contents/tempo_online.db.b64'
+
+@aiocron.crontab('0 11 * * *')
+async def scheduled_backup():
+    await backup_db()
+
+async def backup_db():
+    try:
+        with open(DB_FILE, 'rb') as f:
+            encoded_content = base64.b64encode(f.read()).decode('utf-8')
+
+        response = requests.get(GITHUB_API_URL, headers={
+            'Authorization': f'token {GITHUB_TOKEN}',
+            'Accept': 'application/vnd.github.v3+json'
+        })
+        if response.status_code == 200:
+            sha = response.json()['sha']
+            requests.put(GITHUB_API_URL,
+                headers={
+                    'Authorization': f'token {GITHUB_TOKEN}',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                json={
+                    'message': 'Backup automático/manual',
+                    'content': encoded_content,
+                    'sha': sha
+                }
+            )
+        else:
+            requests.put(GITHUB_API_URL,
+                headers={
+                    'Authorization': f'token {GITHUB_TOKEN}',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                json={
+                    'message': 'Primeiro backup',
+                    'content': encoded_content
+                }
+            )
+        print("Backup enviado para o GitHub.")
+    except Exception as e:
+        print("Erro ao fazer backup:", e)
+
+async def restore_db_from_github():
+    try:
+        response = requests.get(GITHUB_API_URL, headers={
+            'Authorization': f'token {GITHUB_TOKEN}',
+            'Accept': 'application/vnd.github.v3+json'
+        })
+
+        if response.status_code == 200:
+            content = base64.b64decode(response.json()['content'])
+            with open(DB_FILE, 'wb') as f:
+                f.write(content)
+            print("Banco restaurado do GitHub.")
+            return True
+        else:
+            print("Nenhum backup encontrado.")
+            return False
+    except Exception as e:
+        print("Erro ao restaurar banco:", e)
+        return False
+
+@bot.command()
+async def backup_database(ctx):
+    if ctx.author.id != OWNER_ID:
+        return
+    await backup_db()
+    await ctx.send("📦 Backup enviado pro GitHub!")
+
+@bot.command()
+async def restore(ctx):
+    if ctx.author.id != OWNER_ID:
+        return
+    await ctx.send("⚠️ Isso vai restaurar o banco do GitHub e apagar o atual.\nDigite `!confirmar_restore` pra continuar.")
+
+@bot.command()
+async def confirmar_restore(ctx):
+    if ctx.author.id != OWNER_ID:
+        return
+    sucesso = await restore_db_from_github()
+    if sucesso:
+        await ctx.send("✅ Banco restaurado com sucesso.")
+    else:
+        await ctx.send("❌ Erro ao restaurar o banco. Verifique o GitHub.")
+# === FIM BLOCO BACKUP / RESTORE ===
