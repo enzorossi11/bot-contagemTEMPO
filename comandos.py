@@ -15,6 +15,16 @@ def formatar_tempo(segundos_total):
         return f"{horas} horas {minutos_restantes} minutos"
 
 def setup_comandos(bot, conn, cursor, niveis):
+async def debug_addtempo(ctx, membro: discord.Member = None, tempo: int = 0):
+    if ctx.author.id != 343856610235383809:
+        await ctx.send("🚫 Sem permissão.")
+        return
+    if not membro:
+        await ctx.send("❌ Mencione um usuário.")
+        return
+    cursor.execute("UPDATE usuarios SET tempo_total = tempo_total + ? WHERE user_id = ?", (tempo, membro.id))
+    conn.commit()
+    await ctx.send(f"✅ Adicionados {tempo} segundos para {membro.display_name}.")
 
     @bot.command(name="pontos", aliases=["perfil"])
     async def pontos(ctx):
@@ -105,13 +115,3 @@ def setup_comandos(bot, conn, cursor, niveis):
 
 
 @bot.command(name="debug_addtempo")
-async def debug_addtempo(ctx, membro: discord.Member = None, tempo: int = 0):
-    if ctx.author.id != 343856610235383809:
-        await ctx.send("🚫 Sem permissão.")
-        return
-    if not membro:
-        await ctx.send("❌ Mencione um usuário.")
-        return
-    cursor.execute("UPDATE usuarios SET tempo_total = tempo_total + ? WHERE user_id = ?", (tempo, membro.id))
-    conn.commit()
-    await ctx.send(f"✅ Adicionados {tempo} segundos para {membro.display_name}.")
