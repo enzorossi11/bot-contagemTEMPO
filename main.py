@@ -334,7 +334,7 @@ async def restore(ctx):
         return
     await ctx.send("""⚠️ Isso vai restaurar o banco do GitHub e apagar o atual.
 Digite `!confirmar_restore` pra continuar.""")
-Digite `!confirmar_restore` pra continuar.")
+    await ctx.send("""Digite `!confirmar_restore` pra continuar.""")
 
 @bot.command()
 async def confirmar_restore(ctx):
