@@ -62,6 +62,8 @@ async def on_ready():
     await restore_db_from_github()
     print(f"✅ Bot conectado como {bot.user}")
     verificar_tempos.start()
+    if not atualizar_recordes.is_running():
+        atualizar_recordes.start()
 
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -223,7 +225,6 @@ async def atualizar_recordes():
         json.dump(rec, f, indent=2, ensure_ascii=False)
 
 
-atualizar_recordes.start()
 
 @bot.command(name="ranking")
 async def ranking_manual(ctx, tipo=None):
