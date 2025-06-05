@@ -255,6 +255,14 @@ import base64
 import requests
 import aiocron
 
+async def restore_db_from_github():
+    try:
+        response = requests.get(GITHUB_API_URL, headers={
+            'Authorization': f'token {GITHUB_TOKEN}',
+            'Accept': 'application/vnd.github.v3+json'
+        })
+
+
 GITHUB_REPO = 'enzorossi11/bot-contagemTEMPO'
 GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
 OWNER_ID = 343856610235383809
@@ -302,12 +310,6 @@ async def backup_db():
     except Exception as e:
         print("Erro ao fazer backup:", e)
 
-async def restore_db_from_github():
-    try:
-        response = requests.get(GITHUB_API_URL, headers={
-            'Authorization': f'token {GITHUB_TOKEN}',
-            'Accept': 'application/vnd.github.v3+json'
-        })
 
         if response.status_code == 200:
             content = base64.b64decode(response.json()['content'])
