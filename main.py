@@ -138,6 +138,92 @@ async def verificar_tempos():
     conn.commit()
 
 setup_comandos(bot, conn, cursor, NIVEIS)
+
+
+
+@tasks.loop(hours=1)
+async def atualizar_recordes():
+    agora = datetime.utcnow()
+    if agora.hour != 2:  # Evita rodar a lógica fora da janela desejada
+        return
+
+    hoje = agora.date()
+    ontem = hoje - timedelta(days=1)
+    inicio_ontem = datetime.combine(ontem, datetime.min.time()).isoformat()
+    fim_ontem = datetime.combine(ontem, datetime.max.time()).isoformat()
+
+    semana_inicio = hoje - timedelta(days=7)
+    inicio_semana = datetime.combine(semana_inicio, datetime.min.time()).isoformat()
+
+    rec_path = "recordes.json"
+
+    try:
+        with open(rec_path, "r", encoding="utf-8") as f:
+            rec = json.load(f)
+    except FileNotFoundError:
+        rec = {
+            "maior_tempo_dia": {"usuario": "N/A", "tempo": 0, "data": "N/A"},
+            "maior_tempo_semana": {"usuario": "N/A", "tempo": 0, "data": "N/A"},
+            "maior_qtd_membros_call": {"quantidade": 0, "data": "N/A"}
+        }
+
+    # Maior tempo de 1 dia
+    row = cursor.execute("""
+        SELECT user_id, SUM(segundos) FROM historico
+        WHERE timestamp >= ? AND timestamp <= ?
+        GROUP BY user_id
+        ORDER BY SUM(segundos) DESC
+        LIMIT 1
+    """, (inicio_ontem, fim_ontem)).fetchone()
+
+    if row:
+        user_id, tempo = row
+        if tempo > rec["maior_tempo_dia"]["tempo"]:
+            membro = bot.get_user(user_id)
+            nome = membro.display_name if membro else f"ID {user_id}"
+            rec["maior_tempo_dia"] = {
+                "usuario": nome,
+                "tempo": tempo,
+                "data": ontem.isoformat()
+            }
+
+    # Maior tempo de 1 semana
+    row = cursor.execute("""
+        SELECT user_id, SUM(segundos) FROM historico
+        WHERE timestamp >= ?
+        GROUP BY user_id
+        ORDER BY SUM(segundos) DESC
+        LIMIT 1
+    """, (inicio_semana,)).fetchone()
+
+    if row:
+        user_id, tempo = row
+        if tempo > rec["maior_tempo_semana"]["tempo"]:
+            membro = bot.get_user(user_id)
+            nome = membro.display_name if membro else f"ID {user_id}"
+            rec["maior_tempo_semana"] = {
+                "usuario": nome,
+                "tempo": tempo,
+                "data": hoje.isoformat()
+            }
+
+    # Maior quantidade de pessoas simultâneas em call (verificado a cada tick no tempo)
+    for guild in bot.guilds:
+        for vc in guild.voice_channels:
+            membros_validos = [
+                m for m in vc.members
+                if not m.bot and not m.voice.self_mute and not m.voice.self_deaf
+            ]
+            qtd = len(membros_validos)
+            if qtd > rec["maior_qtd_membros_call"]["quantidade"]:
+                rec["maior_qtd_membros_call"]["quantidade"] = qtd
+                rec["maior_qtd_membros_call"]["data"] = hoje.isoformat()
+
+    with open(rec_path, "w", encoding="utf-8") as f:
+        json.dump(rec, f, indent=2, ensure_ascii=False)
+
+
+atualizar_recordes.start()
 bot.run(TOKEN)
 
 
