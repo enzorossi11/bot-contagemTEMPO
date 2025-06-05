@@ -224,6 +224,28 @@ async def atualizar_recordes():
 
 
 atualizar_recordes.start()
+
+@bot.command(name="ranking")
+async def ranking_manual(ctx, tipo=None):
+    if ctx.author.id != 343856610235383809:
+        await ctx.send("🚫 Você não tem permissão para isso.")
+        return
+
+    tipo = (tipo or "").lower()
+
+    if tipo == "diario":
+        await enviar_ranking("diario")
+        await ctx.send("✅ Ranking diário enviado manualmente.")
+    elif tipo == "semanal":
+        await enviar_ranking("semanal")
+        await ctx.send("✅ Ranking semanal enviado manualmente.")
+    elif tipo == "alltime":
+        await enviar_ranking("alltime")
+        await ctx.send("✅ Ranking all time enviado manualmente.")
+    else:
+        await ctx.send("❌ Tipo inválido. Use: `!ranking now diario`, `semanal` ou `alltime`.")
+
+
 bot.run(TOKEN)
 
 

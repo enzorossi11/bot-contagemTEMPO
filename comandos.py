@@ -98,7 +98,7 @@ def setup_comandos(bot, conn, cursor, niveis):
         embed.add_field(name="!toptempo", value="Exibe os recordes históricos do servidor.", inline=False)
         embed.add_field(name="!niveis", value="Mostra a lista completa de níveis do servidor.", inline=False)
         if ctx.author.id == 343856610235383809:
-            embed.add_field(name="!ranking now", value="Força geração dos rankings mesmo fora do horário.", inline=False)
+            embed.add_field(name="!ranking now [diario|semanal|alltime]", value="Força geração dos rankings mesmo fora do horário.", inline=False)
             embed.add_field(name="!backup now", value="Gera backup manual do banco e envia pro GitHub.", inline=False)
             embed.add_field(name="!debug addtempo @user tempo", value="Adiciona tempo (em segundos) a um usuário. Só você pode usar.", inline=False)
         await ctx.send(embed=embed)
