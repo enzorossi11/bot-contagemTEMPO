@@ -62,8 +62,6 @@ async def on_ready():
     await restore_db_from_github()
     print(f"✅ Bot conectado como {bot.user}")
     verificar_tempos.start()
-    if not atualizar_recordes.is_running():
-        atualizar_recordes.start()
 
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -141,110 +139,18 @@ async def verificar_tempos():
 
 setup_comandos(bot, conn, cursor, NIVEIS)
 
+@bot.event
+async def on_message(message):
+    if message.channel.id == 1377160080188772362 and not message.author.bot:
+        await asyncio.sleep(10)
+        await message.delete()
+    await bot.process_commands(message)
 
 
-@tasks.loop(hours=1)
-async def atualizar_recordes():
-    agora = datetime.utcnow()
-    if agora.hour != 2:  # Evita rodar a lógica fora da janela desejada
-        return
-
-    hoje = agora.date()
-    ontem = hoje - timedelta(days=1)
-    inicio_ontem = datetime.combine(ontem, datetime.min.time()).isoformat()
-    fim_ontem = datetime.combine(ontem, datetime.max.time()).isoformat()
-
-    semana_inicio = hoje - timedelta(days=7)
-    inicio_semana = datetime.combine(semana_inicio, datetime.min.time()).isoformat()
-
-    rec_path = "recordes.json"
-
-    try:
-        with open(rec_path, "r", encoding="utf-8") as f:
-            rec = json.load(f)
-    except FileNotFoundError:
-        rec = {
-            "maior_tempo_dia": {"usuario": "N/A", "tempo": 0, "data": "N/A"},
-            "maior_tempo_semana": {"usuario": "N/A", "tempo": 0, "data": "N/A"},
-            "maior_qtd_membros_call": {"quantidade": 0, "data": "N/A"}
-        }
-
-    # Maior tempo de 1 dia
-    row = cursor.execute("""
-        SELECT user_id, SUM(segundos) FROM historico
-        WHERE timestamp >= ? AND timestamp <= ?
-        GROUP BY user_id
-        ORDER BY SUM(segundos) DESC
-        LIMIT 1
-    """, (inicio_ontem, fim_ontem)).fetchone()
-
-    if row:
-        user_id, tempo = row
-        if tempo > rec["maior_tempo_dia"]["tempo"]:
-            membro = bot.get_user(user_id)
-            nome = membro.display_name if membro else f"ID {user_id}"
-            rec["maior_tempo_dia"] = {
-                "usuario": nome,
-                "tempo": tempo,
-                "data": ontem.isoformat()
-            }
-
-    # Maior tempo de 1 semana
-    row = cursor.execute("""
-        SELECT user_id, SUM(segundos) FROM historico
-        WHERE timestamp >= ?
-        GROUP BY user_id
-        ORDER BY SUM(segundos) DESC
-        LIMIT 1
-    """, (inicio_semana,)).fetchone()
-
-    if row:
-        user_id, tempo = row
-        if tempo > rec["maior_tempo_semana"]["tempo"]:
-            membro = bot.get_user(user_id)
-            nome = membro.display_name if membro else f"ID {user_id}"
-            rec["maior_tempo_semana"] = {
-                "usuario": nome,
-                "tempo": tempo,
-                "data": hoje.isoformat()
-            }
-
-    # Maior quantidade de pessoas simultâneas em call (verificado a cada tick no tempo)
-    for guild in bot.guilds:
-        for vc in guild.voice_channels:
-            membros_validos = [
-                m for m in vc.members
-                if not m.bot and not m.voice.self_mute and not m.voice.self_deaf
-            ]
-            qtd = len(membros_validos)
-            if qtd > rec["maior_qtd_membros_call"]["quantidade"]:
-                rec["maior_qtd_membros_call"]["quantidade"] = qtd
-                rec["maior_qtd_membros_call"]["data"] = hoje.isoformat()
-
-    with open(rec_path, "w", encoding="utf-8") as f:
-        json.dump(rec, f, indent=2, ensure_ascii=False)
-
-
-
-@bot.command(name="ranking")
-async def ranking_manual(ctx, tipo=None):
-    if ctx.author.id != 343856610235383809:
-        await ctx.send("🚫 Você não tem permissão para isso.")
-        return
-
-    tipo = (tipo or "").lower()
-
-    if tipo == "diario":
-        await enviar_ranking("diario")
-        await ctx.send("✅ Ranking diário enviado manualmente.")
-    elif tipo == "semanal":
-        await enviar_ranking("semanal")
-        await ctx.send("✅ Ranking semanal enviado manualmente.")
-    elif tipo == "alltime":
-        await enviar_ranking("alltime")
-        await ctx.send("✅ Ranking all time enviado manualmente.")
-    else:
-        await ctx.send("❌ Tipo inválido. Use: `!ranking now diario`, `semanal` ou `alltime`.")
+@aiocron.crontab('0 23 * * 0')  # 20h Brasília no domingo
+async def enviar_ranking_semanal_alltime():
+    await enviar_ranking("semanal")
+    await enviar_ranking("alltime")
 
 
 bot.run(TOKEN)
@@ -255,20 +161,7 @@ import base64
 import requests
 import aiocron
 
-async def restore_db_from_github():
-    try:
-        response = requests.get(GITHUB_API_URL, headers={
-            'Authorization': f'token {GITHUB_TOKEN}',
-            'Accept': 'application/vnd.github.v3+json'
-        })
-    except Exception as e:
-        print('Erro ao obter backup do GitHub:', e)
-
-
-    try:
-        GITHUB_REPO = 'enzorossi11/bot-contagemTEMPO'
-    except Exception as e:
-        print('Erro ao definir GITHUB_REPO:', e)
+GITHUB_REPO = 'enzorossi11/bot-contagemTEMPO'
 GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
 OWNER_ID = 343856610235383809
 DB_FILE = 'tempo_online.db'
@@ -315,6 +208,12 @@ async def backup_db():
     except Exception as e:
         print("Erro ao fazer backup:", e)
 
+async def restore_db_from_github():
+    try:
+        response = requests.get(GITHUB_API_URL, headers={
+            'Authorization': f'token {GITHUB_TOKEN}',
+            'Accept': 'application/vnd.github.v3+json'
+        })
 
         if response.status_code == 200:
             content = base64.b64decode(response.json()['content'])
@@ -342,7 +241,7 @@ async def restore(ctx):
         return
     await ctx.send("""⚠️ Isso vai restaurar o banco do GitHub e apagar o atual.
 Digite `!confirmar_restore` pra continuar.""")
-    await ctx.send("""Digite `!confirmar_restore` pra continuar.""")
+    await ctx.send("""⚠️ Isso vai restaurar o banco do GitHub e apagar o atual.\nDigite `!confirmar_restore` pra continuar.""")
 
 @bot.command()
 async def confirmar_restore(ctx):

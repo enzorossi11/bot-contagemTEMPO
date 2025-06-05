@@ -98,7 +98,20 @@ def setup_comandos(bot, conn, cursor, niveis):
         embed.add_field(name="!toptempo", value="Exibe os recordes históricos do servidor.", inline=False)
         embed.add_field(name="!niveis", value="Mostra a lista completa de níveis do servidor.", inline=False)
         if ctx.author.id == 343856610235383809:
-            embed.add_field(name="!ranking now [diario|semanal|alltime]", value="Força geração dos rankings mesmo fora do horário.", inline=False)
+            embed.add_field(name="!ranking_now", value="Força geração dos rankings mesmo fora do horário.", inline=False)
             embed.add_field(name="!backup now", value="Gera backup manual do banco e envia pro GitHub.", inline=False)
             embed.add_field(name="!debug addtempo @user tempo", value="Adiciona tempo (em segundos) a um usuário. Só você pode usar.", inline=False)
         await ctx.send(embed=embed)
+
+
+@bot.command(name="debug_addtempo")
+async def debug_addtempo(ctx, membro: discord.Member = None, tempo: int = 0):
+    if ctx.author.id != 343856610235383809:
+        await ctx.send("🚫 Sem permissão.")
+        return
+    if not membro:
+        await ctx.send("❌ Mencione um usuário.")
+        return
+    cursor.execute("UPDATE usuarios SET tempo_total = tempo_total + ? WHERE user_id = ?", (tempo, membro.id))
+    conn.commit()
+    await ctx.send(f"✅ Adicionados {tempo} segundos para {membro.display_name}.")
