@@ -261,9 +261,14 @@ async def restore_db_from_github():
             'Authorization': f'token {GITHUB_TOKEN}',
             'Accept': 'application/vnd.github.v3+json'
         })
+    except Exception as e:
+        print('Erro ao obter backup do GitHub:', e)
 
 
-GITHUB_REPO = 'enzorossi11/bot-contagemTEMPO'
+    try:
+        GITHUB_REPO = 'enzorossi11/bot-contagemTEMPO'
+    except Exception as e:
+        print('Erro ao definir GITHUB_REPO:', e)
 GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
 OWNER_ID = 343856610235383809
 DB_FILE = 'tempo_online.db'
